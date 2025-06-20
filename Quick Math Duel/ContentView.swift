@@ -555,11 +555,12 @@ struct MenuView: View {
     
     private func shareMessage() -> String {
         let streakText = notificationManager.weeklyStreak > 0 ? " (🔥 \(notificationManager.weeklyStreak) week streak!)" : ""
+        let appStoreLink = "📱 Get it: https://bit.ly/QuickMathDuel" // Replace with actual App Store link
         
         if gameModel.bestScore > 0 {
-            return "🎮 Just scored \(gameModel.bestScore) in Quick Math Challenge! Can you beat my high score?\(streakText) #QuickMathChallenge #BrainTraining"
+            return "🎮 Just scored \(gameModel.bestScore) in Quick Math Challenge! Can you beat my high score?\(streakText)\n\n\(appStoreLink) #QuickMathChallenge #BrainTraining"
         } else {
-            return "🎮 Check out Quick Math Challenge - the ultimate fast-paced math game! How high can you score?\(streakText) #QuickMathChallenge #BrainTraining"
+            return "🎮 Check out Quick Math Challenge - the ultimate fast-paced math game! How high can you score?\(streakText)\n\n\(appStoreLink) #QuickMathChallenge #BrainTraining"
         }
     }
 }
@@ -1389,7 +1390,8 @@ struct GameOverView: View {
     private func shareGameOverMessage() -> String {
         let isNewRecord = gameModel.score == gameModel.bestScore && gameModel.score > 0
         let recordText = isNewRecord ? " 🎉 NEW RECORD!" : ""
-        return "🎮 Just scored \(gameModel.score) in Quick Math Challenge!\(recordText) Can you beat my score? #QuickMathChallenge #BrainTraining #MathGame"
+        let appStoreLink = "📱 Get it: https://bit.ly/QuickMathDuel" // Replace with actual App Store link
+        return "🎮 Just scored \(gameModel.score) in Quick Math Challenge!\(recordText) Can you beat my score?\n\n\(appStoreLink) #QuickMathChallenge #BrainTraining #MathGame"
     }
 }
 

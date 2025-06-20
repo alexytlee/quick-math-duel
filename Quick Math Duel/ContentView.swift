@@ -106,75 +106,297 @@ struct MenuView: View {
     @State private var buttonScale = 1.0
     @State private var powerUpsVisible = false
     
+    // Pre-calculate all device-specific values to avoid complex expressions
+    private var taglineFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 12
+        case .regular: return 14
+        case .large: return 16
+        case .iPad: return 18
+        }
+    }
+    
+    private var buttonWidth: CGFloat {
+        switch deviceSize {
+        case .compact: return 200
+        case .regular: return 220
+        case .large: return 250
+        case .iPad: return 300
+        }
+    }
+    
+    private var buttonHeight: CGFloat {
+        switch deviceSize {
+        case .compact: return 55
+        case .regular: return 60
+        case .large: return 65
+        case .iPad: return 80
+        }
+    }
+    
+    private var buttonFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 18
+        case .regular: return 20
+        case .large: return 22
+        case .iPad: return 28
+        }
+    }
+    
+    private var logoSpacing: CGFloat {
+        switch deviceSize {
+        case .compact: return 3
+        case .regular: return 5
+        case .large: return 6
+        case .iPad: return 8
+        }
+    }
+    
+    private var logoMaxWidth: CGFloat {
+        switch deviceSize {
+        case .compact: return 800
+        case .regular: return 1000
+        case .large: return 1200
+        case .iPad: return 1400
+        }
+    }
+    
+    private var logoMaxHeight: CGFloat {
+        switch deviceSize {
+        case .compact: return 220
+        case .regular: return 280
+        case .large: return 320
+        case .iPad: return 400
+        }
+    }
+    
+    private var logoPaddingTop: CGFloat {
+        switch deviceSize {
+        case .compact: return -10
+        case .regular: return -15
+        case .large: return -15
+        case .iPad: return -20
+        }
+    }
+    
+    private var middleSpacing: CGFloat {
+        switch deviceSize {
+        case .compact: return 20
+        case .regular: return 25
+        case .large: return 30
+        case .iPad: return 35
+        }
+    }
+    
+    private var shadowHeight: CGFloat {
+        switch deviceSize {
+        case .compact: return 3
+        case .regular: return 4
+        case .large: return 4
+        case .iPad: return 6
+        }
+    }
+    
+    private var strokeWidth: CGFloat {
+        switch deviceSize {
+        case .compact: return 2
+        case .regular: return 3
+        case .large: return 3
+        case .iPad: return 4
+        }
+    }
+    
+    private var powerUpSpacing: CGFloat {
+        switch deviceSize {
+        case .compact: return 8
+        case .regular: return 10
+        case .large: return 12
+        case .iPad: return 15
+        }
+    }
+    
+    private var powerUpFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 10
+        case .regular: return 12
+        case .large: return 14
+        case .iPad: return 16
+        }
+    }
+    
+    private var powerUpHSpacing: CGFloat {
+        switch deviceSize {
+        case .compact: return 12
+        case .regular: return 15
+        case .large: return 20
+        case .iPad: return 25
+        }
+    }
+    
+    private var powerUpIconSpacing: CGFloat {
+        switch deviceSize {
+        case .compact: return 3
+        case .regular: return 5
+        case .large: return 5
+        case .iPad: return 8
+        }
+    }
+    
+    private var powerUpIconSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 16
+        case .regular: return 20
+        case .large: return 20
+        case .iPad: return 28
+        }
+    }
+    
+    private var powerUpCountSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 12
+        case .regular: return 16
+        case .large: return 16
+        case .iPad: return 22
+        }
+    }
+    
+    private var powerUpLabelSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 7
+        case .regular: return 9
+        case .large: return 9
+        case .iPad: return 12
+        }
+    }
+    
+    private var powerUpHPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 8
+        case .regular: return 12
+        case .large: return 12
+        case .iPad: return 18
+        }
+    }
+    
+    private var powerUpVPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 6
+        case .regular: return 8
+        case .large: return 8
+        case .iPad: return 12
+        }
+    }
+    
+    private var highScoreFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 10
+        case .regular: return 12
+        case .large: return 12
+        case .iPad: return 16
+        }
+    }
+    
+    private var highScoreNumberSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 24
+        case .regular: return 28
+        case .large: return 28
+        case .iPad: return 36
+        }
+    }
+    
+    private var rankFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 6
+        case .regular: return 7
+        case .large: return 7
+        case .iPad: return 9
+        }
+    }
+    
+    private var smallButtonWidth: CGFloat {
+        switch deviceSize {
+        case .compact: return 95
+        case .regular: return 105
+        case .large: return 120
+        case .iPad: return 140
+        }
+    }
+    
+    private var smallButtonHeight: CGFloat {
+        switch deviceSize {
+        case .compact: return 45
+        case .regular: return 50
+        case .large: return 55
+        case .iPad: return 65
+        }
+    }
+    
+    private var smallButtonFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 10
+        case .regular: return 12
+        case .large: return 14
+        case .iPad: return 16
+        }
+    }
+    
+    private var smallButtonIconSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 14
+        case .regular: return 16
+        case .large: return 16
+        case .iPad: return 20
+        }
+    }
+    
+    private var buttonSpacing: CGFloat {
+        switch deviceSize {
+        case .compact: return 8
+        case .regular: return 12
+        case .large: return 12
+        case .iPad: return 20
+        }
+    }
+    
+    private var smallShadowHeight: CGFloat {
+        switch deviceSize {
+        case .compact: return 2
+        case .regular: return 3
+        case .large: return 3
+        case .iPad: return 4
+        }
+    }
+    
+    private var smallStrokeWidth: CGFloat {
+        switch deviceSize {
+        case .compact: return 1
+        case .regular: return 2
+        case .large: return 2
+        case .iPad: return 3
+        }
+    }
+    
+    private var mainPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 10
+        case .regular: return 15
+        case .large: return 15
+        case .iPad: return 30
+        }
+    }
+    
+    private var bottomPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 30
+        case .regular: return 40
+        case .large: return 40
+        case .iPad: return 60
+        }
+    }
+
     var body: some View {
         GeometryReader { geometry in
-            let taglineFontSize: CGFloat = {
-                switch deviceSize {
-                case .compact: return 12
-                case .regular: return 14
-                case .large: return 16
-                case .iPad: return 18
-                }
-            }()
-            let buttonWidth: CGFloat = {
-                switch deviceSize {
-                case .compact: return 200
-                case .regular: return 220
-                case .large: return 250
-                case .iPad: return 300
-                }
-            }()
-            let buttonHeight: CGFloat = {
-                switch deviceSize {
-                case .compact: return 55
-                case .regular: return 60
-                case .large: return 65
-                case .iPad: return 80
-                }
-            }()
-            let buttonFontSize: CGFloat = {
-                switch deviceSize {
-                case .compact: return 18
-                case .regular: return 20
-                case .large: return 22
-                case .iPad: return 28
-                }
-            }()
-            
-            // Calculate layout values first to avoid complex expressions
-            let logoSpacing: CGFloat = {
-                switch deviceSize {
-                case .compact: return 3
-                case .regular: return 5
-                case .large: return 6
-                case .iPad: return 8
-                }
-            }()
-            let logoMaxWidth: CGFloat = {
-                switch deviceSize {
-                case .compact: return 800
-                case .regular: return 1000
-                case .large: return 1200
-                case .iPad: return 1400
-                }
-            }()
-            let logoMaxHeight: CGFloat = {
-                switch deviceSize {
-                case .compact: return 220
-                case .regular: return 280
-                case .large: return 320
-                case .iPad: return 400
-                }
-            }()
-            let logoPaddingTop: CGFloat = {
-                switch deviceSize {
-                case .compact: return -10
-                case .regular: return -15
-                case .large: return -15
-                case .iPad: return -20
-                }
-            }()
-            
             VStack(spacing: 0) {
                 // Top section with title and tagline - moved up to give more space below
                 VStack(spacing: logoSpacing) {
@@ -197,14 +419,6 @@ struct MenuView: View {
             Spacer()
             
                 // Middle section with start button and power-ups
-                let middleSpacing: CGFloat = {
-                    switch deviceSize {
-                    case .compact: return 20
-                    case .regular: return 25
-                    case .large: return 30
-                    case .iPad: return 35
-                    }
-                }()
                 VStack(spacing: middleSpacing) {
                     // Retro start button
                     Button(action: {
@@ -228,23 +442,6 @@ struct MenuView: View {
                         .frame(width: buttonWidth, height: buttonHeight)
                         .background(
                             ZStack {
-                                let shadowHeight: CGFloat = {
-                                    switch deviceSize {
-                                    case .compact: return 3
-                                    case .regular: return 4
-                                    case .large: return 4
-                                    case .iPad: return 6
-                                    }
-                                }()
-                                let strokeWidth: CGFloat = {
-                                    switch deviceSize {
-                                    case .compact: return 2
-                                    case .regular: return 3
-                                    case .large: return 3
-                                    case .iPad: return 4
-                                    }
-                                }()
-                                
                                 Rectangle()
                                     .fill(Color.green)
                                 Rectangle()
@@ -259,14 +456,7 @@ struct MenuView: View {
                         )
                         .overlay(
                             Rectangle()
-                                .stroke(Color.white, lineWidth: {
-                                    switch deviceSize {
-                                    case .compact: return 2
-                                    case .regular: return 3
-                                    case .large: return 3
-                                    case .iPad: return 4
-                                    }
-                                }())
+                                .stroke(Color.white, lineWidth: strokeWidth)
                         )
                     }
                     .scaleEffect(buttonScale)
@@ -274,31 +464,6 @@ struct MenuView: View {
                 
                     // Power-ups display (moved from shop for conversion)
                     if powerUpsVisible {
-                        let powerUpSpacing: CGFloat = {
-                            switch deviceSize {
-                            case .compact: return 8
-                            case .regular: return 10
-                            case .large: return 12
-                            case .iPad: return 15
-                            }
-                        }()
-                        let powerUpFontSize: CGFloat = {
-                            switch deviceSize {
-                            case .compact: return 10
-                            case .regular: return 12
-                            case .large: return 14
-                            case .iPad: return 16
-                            }
-                        }()
-                        let powerUpHSpacing: CGFloat = {
-                            switch deviceSize {
-                            case .compact: return 12
-                            case .regular: return 15
-                            case .large: return 20
-                            case .iPad: return 25
-                            }
-                        }()
-                        
                         VStack(spacing: powerUpSpacing) {
                             Text("⚡ YOUR POWER-UPS")
                                 .font(.system(size: powerUpFontSize, weight: .bold, design: .monospaced))
@@ -312,55 +477,6 @@ struct MenuView: View {
                                         showingShop = true
                                     }
                                 }) {
-                                    let powerUpIconSpacing: CGFloat = {
-                                        switch deviceSize {
-                                        case .compact: return 3
-                                        case .regular: return 5
-                                        case .large: return 5
-                                        case .iPad: return 8
-                                        }
-                                    }()
-                                    let powerUpIconSize: CGFloat = {
-                                        switch deviceSize {
-                                        case .compact: return 16
-                                        case .regular: return 20
-                                        case .large: return 20
-                                        case .iPad: return 28
-                                        }
-                                    }()
-                                    let powerUpCountSize: CGFloat = {
-                                        switch deviceSize {
-                                        case .compact: return 12
-                                        case .regular: return 16
-                                        case .large: return 16
-                                        case .iPad: return 22
-                                        }
-                                    }()
-                                    let powerUpLabelSize: CGFloat = {
-                                        switch deviceSize {
-                                        case .compact: return 7
-                                        case .regular: return 9
-                                        case .large: return 9
-                                        case .iPad: return 12
-                                        }
-                                    }()
-                                    let powerUpHPadding: CGFloat = {
-                                        switch deviceSize {
-                                        case .compact: return 8
-                                        case .regular: return 12
-                                        case .large: return 12
-                                        case .iPad: return 18
-                                        }
-                                    }()
-                                    let powerUpVPadding: CGFloat = {
-                                        switch deviceSize {
-                                        case .compact: return 6
-                                        case .regular: return 8
-                                        case .large: return 8
-                                        case .iPad: return 12
-                                        }
-                                    }()
-                                    
                                     VStack(spacing: powerUpIconSpacing) {
                                         Text("💡")
                                             .font(.system(size: powerUpIconSize))
@@ -385,18 +501,18 @@ struct MenuView: View {
                                         showingShop = true
                                     }
                                 }) {
-                                    VStack(spacing: deviceSize == .iPad ? 8 : deviceSize == .compact ? 3 : 5) {
+                                    VStack(spacing: powerUpIconSpacing) {
                                         Text("🐌")
-                                            .font(.system(size: deviceSize == .iPad ? 28 : deviceSize == .compact ? 16 : 20))
+                                            .font(.system(size: powerUpIconSize))
                                         Text("\(gameModel.slowTimersAvailable)")
-                                            .font(.system(size: deviceSize == .iPad ? 22 : deviceSize == .compact ? 12 : 16, weight: .bold, design: .monospaced))
+                                            .font(.system(size: powerUpCountSize, weight: .bold, design: .monospaced))
                                             .foregroundColor(gameModel.slowTimersAvailable <= 2 ? .red : .green)
                                         Text("SLOW")
-                                            .font(.system(size: deviceSize == .iPad ? 12 : deviceSize == .compact ? 7 : 9, weight: .bold, design: .monospaced))
+                                            .font(.system(size: powerUpLabelSize, weight: .bold, design: .monospaced))
                                             .foregroundColor(.green)
                                     }
-                                    .padding(.horizontal, deviceSize == .iPad ? 18 : deviceSize == .compact ? 8 : 12)
-                                    .padding(.vertical, deviceSize == .iPad ? 12 : deviceSize == .compact ? 6 : 8)
+                                    .padding(.horizontal, powerUpHPadding)
+                                    .padding(.vertical, powerUpVPadding)
                                     .background(Color.green.opacity(gameModel.slowTimersAvailable <= 2 ? 0.8 : 0.3))
                                     .overlay(Rectangle().stroke(gameModel.slowTimersAvailable <= 2 ? Color.red : Color.green, lineWidth: gameModel.slowTimersAvailable <= 2 ? 2 : 1))
                                     .scaleEffect(gameModel.slowTimersAvailable <= 2 ? 1.05 : 1.0)
@@ -407,7 +523,7 @@ struct MenuView: View {
                             // Low power-up warning
                             if gameModel.hintsAvailable <= 2 || gameModel.slowTimersAvailable <= 2 {
                                 Text("⚠️ RUNNING LOW! TAP POWER-UPS TO REFILL")
-                                    .font(.system(size: deviceSize == .iPad ? 14 : deviceSize == .compact ? 8 : 10, weight: .bold, design: .monospaced))
+                                    .font(.system(size: powerUpFontSize, weight: .bold, design: .monospaced))
                                     .foregroundColor(.red)
                                     .multilineTextAlignment(.center)
                                     .opacity(0.8)
@@ -427,11 +543,11 @@ struct MenuView: View {
                 // High Score Display (always visible)
                 VStack(spacing: 3) {
                     Text("🏆 HIGH SCORE")
-                        .font(.system(size: deviceSize == .iPad ? 16 : deviceSize == .compact ? 10 : 12, weight: .bold, design: .monospaced))
+                        .font(.system(size: highScoreFontSize, weight: .bold, design: .monospaced))
                         .foregroundColor(.yellow)
                         .tracking(1)
                     Text("\(gameModel.bestScore)")
-                        .font(.system(size: deviceSize == .iPad ? 36 : deviceSize == .compact ? 24 : 28, weight: .black, design: .monospaced))
+                        .font(.system(size: highScoreNumberSize, weight: .black, design: .monospaced))
                         .foregroundColor(gameModel.bestScore > 0 ? .white : .gray)
                         .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore)
                     
@@ -441,12 +557,12 @@ struct MenuView: View {
                             if let rank = gameCenterManager.globalRank, let total = gameCenterManager.totalPlayers {
                                 let percentage = Int(Double(rank) / Double(total) * 100)
                                 Text("GLOBAL: #\(rank) • TOP \(100 - percentage)%")
-                                    .font(.system(size: deviceSize == .iPad ? 9 : deviceSize == .compact ? 6 : 7, weight: .bold, design: .monospaced))
+                                    .font(.system(size: rankFontSize, weight: .bold, design: .monospaced))
                                     .foregroundColor(.cyan.opacity(0.8))
                                     .tracking(0.5)
                             } else {
                                 Text("CALCULATING RANK...")
-                                    .font(.system(size: deviceSize == .iPad ? 9 : deviceSize == .compact ? 6 : 7, weight: .bold, design: .monospaced))
+                                    .font(.system(size: rankFontSize, weight: .bold, design: .monospaced))
                                     .foregroundColor(.gray.opacity(0.6))
                                     .tracking(0.5)
                             }
@@ -459,42 +575,17 @@ struct MenuView: View {
                 .background(gameModel.bestScore > 0 ? Color.red.opacity(0.8) : Color.gray.opacity(0.3))
                 .overlay(
                     Rectangle()
-                        .stroke(gameModel.bestScore > 0 ? Color.white : Color.gray, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                        .stroke(gameModel.bestScore > 0 ? Color.white : Color.gray, lineWidth: strokeWidth)
                 )
                 .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore > 0)
                 
                 // Share Score and Leaderboard Buttons (side by side)
-                let smallButtonWidth: CGFloat = {
-                    switch deviceSize {
-                    case .compact: return 95
-                    case .regular: return 105
-                    case .large: return 120
-                    case .iPad: return 140
-                    }
-                }()
-                let smallButtonHeight: CGFloat = {
-                    switch deviceSize {
-                    case .compact: return 45
-                    case .regular: return 50
-                    case .large: return 55
-                    case .iPad: return 65
-                    }
-                }()
-                let smallButtonFontSize: CGFloat = {
-                    switch deviceSize {
-                    case .compact: return 10
-                    case .regular: return 12
-                    case .large: return 14
-                    case .iPad: return 16
-                    }
-                }()
-                
-                HStack(spacing: deviceSize == .iPad ? 20 : deviceSize == .compact ? 8 : 12) {
+                HStack(spacing: buttonSpacing) {
                     // Share Button
                     ShareLink(item: shareMessage()) {
                         VStack(spacing: 2) {
                             Text("📤")
-                                .font(.system(size: deviceSize == .iPad ? 20 : deviceSize == .compact ? 14 : 16))
+                                .font(.system(size: smallButtonIconSize))
                             Text("SHARE")
                                 .font(.system(size: smallButtonFontSize, weight: .black, design: .monospaced))
                                 .foregroundColor(.black)
@@ -506,15 +597,15 @@ struct MenuView: View {
                                     .fill(gameModel.bestScore > 0 ? Color.cyan : Color.cyan.opacity(0.6))
                                 Rectangle()
                                     .fill(Color.white.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .frame(height: smallShadowHeight)
                                     .offset(y: -(smallButtonHeight / 2.5))
                                 Rectangle()
                                     .fill(Color.black.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .frame(height: smallShadowHeight)
                                     .offset(y: (smallButtonHeight / 2.5))
                             }
                         )
-                        .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 3 : deviceSize == .compact ? 1 : 2))
+                        .overlay(Rectangle().stroke(Color.white, lineWidth: smallStrokeWidth))
                     }
                     .disabled(gameModel.bestScore == 0)
                     .opacity(gameModel.bestScore > 0 ? 1.0 : 0.7)
@@ -526,7 +617,7 @@ struct MenuView: View {
                     }) {
                         VStack(spacing: 2) {
                             Text("🏆")
-                                .font(.system(size: deviceSize == .iPad ? 20 : deviceSize == .compact ? 14 : 16))
+                                .font(.system(size: smallButtonIconSize))
                             Text("LEADERBOARD")
                                 .font(.system(size: smallButtonFontSize, weight: .black, design: .monospaced))
                                 .foregroundColor(.black)
@@ -540,15 +631,15 @@ struct MenuView: View {
                                     .fill(gameCenterManager.isAuthenticated ? Color.yellow : Color.yellow.opacity(0.6))
                                 Rectangle()
                                     .fill(Color.white.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .frame(height: smallShadowHeight)
                                     .offset(y: -(smallButtonHeight / 2.5))
                                 Rectangle()
                                     .fill(Color.black.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .frame(height: smallShadowHeight)
                                     .offset(y: (smallButtonHeight / 2.5))
                             }
                         )
-                        .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 3 : deviceSize == .compact ? 1 : 2))
+                        .overlay(Rectangle().stroke(Color.white, lineWidth: smallStrokeWidth))
                     }
                     .disabled(!gameCenterManager.isAuthenticated)
                     .opacity(gameCenterManager.isAuthenticated ? 1.0 : 0.7)
@@ -584,9 +675,9 @@ struct MenuView: View {
                     )
                 }
                 }
-                .padding(.bottom, deviceSize == .iPad ? 60 : deviceSize == .compact ? 30 : 40)
+                .padding(.bottom, bottomPadding)
             }
-            .padding(deviceSize == .iPad ? 30 : deviceSize == .compact ? 10 : 15)
+            .padding(mainPadding)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .safeAreaInset(edge: .top) {
@@ -2296,6 +2387,7 @@ class NotificationManager: ObservableObject {
 
 // MARK: - Game Center Manager
 
+@MainActor
 class GameCenterManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var showingLeaderboard = false
@@ -2339,19 +2431,25 @@ class GameCenterManager: ObservableObject {
             return
         }
         
-        let scoreReporter = GKScore(leaderboardIdentifier: Self.leaderboardID)
-        scoreReporter.value = Int64(score)
-        
-        GKScore.report([scoreReporter]) { [weak self] error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("❌ Error submitting score to Game Center: \(error.localizedDescription)")
-                } else {
+        Task {
+            do {
+                try await GKLeaderboard.submitScore(
+                    score,
+                    context: 0,
+                    player: GKLocalPlayer.local,
+                    leaderboardIDs: [Self.leaderboardID]
+                )
+                
+                await MainActor.run {
                     print("✅ Score \(score) submitted to Game Center successfully!")
                     // Fetch updated rank after score submission
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        self?.fetchUserRank()
+                        self.fetchUserRank()
                     }
+                }
+            } catch {
+                await MainActor.run {
+                    print("❌ Error submitting score to Game Center: \(error.localizedDescription)")
                 }
             }
         }
@@ -2363,7 +2461,7 @@ class GameCenterManager: ObservableObject {
             return
         }
         
-        let leaderboardVC = GKGameCenterViewController(leaderboardID: Self.leaderboardID, playerScope: .global, timeScope: .allTime)
+        let leaderboardVC = GKGameCenterViewController(state: .leaderboards)
         leaderboardVC.gameCenterDelegate = GameCenterDelegate.shared
         
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -2378,26 +2476,41 @@ class GameCenterManager: ObservableObject {
             return
         }
         
-        let leaderboard = GKLeaderboard()
-        leaderboard.identifier = Self.leaderboardID
-        leaderboard.playerScope = .global
-        leaderboard.timeScope = .allTime
-        leaderboard.range = NSRange(location: 1, length: 1)
-        
-        leaderboard.loadScores { [weak self] scores, error in
-            DispatchQueue.main.async {
-                if let error = error {
+        Task {
+            do {
+                let leaderboards = try await GKLeaderboard.loadLeaderboards(IDs: [Self.leaderboardID])
+                
+                guard let leaderboard = leaderboards.first else {
+                    await MainActor.run {
+                        print("⚠️ No leaderboard found")
+                        self.globalRank = nil
+                        self.totalPlayers = nil
+                    }
+                    return
+                }
+                
+                let (localEntry, _, totalPlayerCount) = try await leaderboard.loadEntries(
+                    for: .global,
+                    timeScope: .allTime,
+                    range: NSRange(location: 1, length: 1)
+                )
+                
+                await MainActor.run {
+                    if let localEntry = localEntry {
+                        self.globalRank = localEntry.rank
+                        self.totalPlayers = totalPlayerCount
+                        print("✅ User rank fetched: #\(localEntry.rank) out of \(totalPlayerCount)")
+                    } else {
+                        print("⚠️ No score found for local player")
+                        self.globalRank = nil
+                        self.totalPlayers = nil
+                    }
+                }
+            } catch {
+                await MainActor.run {
                     print("❌ Error fetching user rank: \(error.localizedDescription)")
-                    self?.globalRank = nil
-                    self?.totalPlayers = nil
-                } else if let localPlayerScore = leaderboard.localPlayerScore {
-                    self?.globalRank = localPlayerScore.rank
-                    self?.totalPlayers = leaderboard.maxRange
-                    print("✅ User rank fetched: #\(localPlayerScore.rank) out of \(leaderboard.maxRange)")
-                } else {
-                    print("⚠️ No score found for local player")
-                    self?.globalRank = nil
-                    self?.totalPlayers = nil
+                    self.globalRank = nil
+                    self.totalPlayers = nil
                 }
             }
         }

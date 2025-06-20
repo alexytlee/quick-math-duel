@@ -361,59 +361,97 @@ struct MenuView: View {
                 )
                 .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore > 0)
                 
-                // Share Button (always visible)
-                ShareLink(item: shareMessage()) {
-                    Text("📤 SHARE SCORE")
-                        .font(.system(size: deviceSize == .iPad ? 18 : deviceSize == .compact ? 12 : 14, weight: .black, design: .monospaced))
-                        .foregroundColor(.black)
-                        .frame(width: buttonWidth, height: buttonHeight)
+                // Share Score and Leaderboard Buttons (side by side)
+                let smallButtonWidth: CGFloat = {
+                    switch deviceSize {
+                    case .compact: return 95
+                    case .regular: return 105
+                    case .large: return 120
+                    case .iPad: return 140
+                    }
+                }()
+                let smallButtonHeight: CGFloat = {
+                    switch deviceSize {
+                    case .compact: return 45
+                    case .regular: return 50
+                    case .large: return 55
+                    case .iPad: return 65
+                    }
+                }()
+                let smallButtonFontSize: CGFloat = {
+                    switch deviceSize {
+                    case .compact: return 10
+                    case .regular: return 12
+                    case .large: return 14
+                    case .iPad: return 16
+                    }
+                }()
+                
+                HStack(spacing: deviceSize == .iPad ? 20 : deviceSize == .compact ? 8 : 12) {
+                    // Share Button
+                    ShareLink(item: shareMessage()) {
+                        VStack(spacing: 2) {
+                            Text("📤")
+                                .font(.system(size: deviceSize == .iPad ? 20 : deviceSize == .compact ? 14 : 16))
+                            Text("SHARE")
+                                .font(.system(size: smallButtonFontSize, weight: .black, design: .monospaced))
+                                .foregroundColor(.black)
+                        }
+                        .frame(width: smallButtonWidth, height: smallButtonHeight)
                         .background(
                             ZStack {
                                 Rectangle()
                                     .fill(gameModel.bestScore > 0 ? Color.cyan : Color.cyan.opacity(0.6))
                                 Rectangle()
                                     .fill(Color.white.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
-                                    .offset(y: -(buttonHeight / 2.5))
+                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .offset(y: -(smallButtonHeight / 2.5))
                                 Rectangle()
                                     .fill(Color.black.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
-                                    .offset(y: (buttonHeight / 2.5))
+                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .offset(y: (smallButtonHeight / 2.5))
                             }
                         )
-                        .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
-                }
-                .disabled(gameModel.bestScore == 0)
-                .opacity(gameModel.bestScore > 0 ? 1.0 : 0.7)
-                .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore > 0)
-                
-                // Game Center Leaderboard Button
-                Button(action: {
-                    gameCenterManager.showLeaderboard()
-                }) {
-                    Text("🏆 LEADERBOARD")
-                        .font(.system(size: deviceSize == .iPad ? 18 : deviceSize == .compact ? 12 : 14, weight: .black, design: .monospaced))
-                        .foregroundColor(.black)
-                        .frame(width: buttonWidth, height: buttonHeight)
+                        .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 3 : deviceSize == .compact ? 1 : 2))
+                    }
+                    .disabled(gameModel.bestScore == 0)
+                    .opacity(gameModel.bestScore > 0 ? 1.0 : 0.7)
+                    .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore > 0)
+                    
+                    // Leaderboard Button
+                    Button(action: {
+                        gameCenterManager.showLeaderboard()
+                    }) {
+                        VStack(spacing: 2) {
+                            Text("🏆")
+                                .font(.system(size: deviceSize == .iPad ? 20 : deviceSize == .compact ? 14 : 16))
+                            Text("LEADERBOARD")
+                                .font(.system(size: smallButtonFontSize, weight: .black, design: .monospaced))
+                                .foregroundColor(.black)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .frame(width: smallButtonWidth, height: smallButtonHeight)
                         .background(
                             ZStack {
                                 Rectangle()
                                     .fill(gameCenterManager.isAuthenticated ? Color.yellow : Color.yellow.opacity(0.6))
                                 Rectangle()
                                     .fill(Color.white.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
-                                    .offset(y: -(buttonHeight / 2.5))
+                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .offset(y: -(smallButtonHeight / 2.5))
                                 Rectangle()
                                     .fill(Color.black.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
-                                    .offset(y: (buttonHeight / 2.5))
+                                    .frame(height: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                    .offset(y: (smallButtonHeight / 2.5))
                             }
                         )
-                        .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
+                        .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 3 : deviceSize == .compact ? 1 : 2))
+                    }
+                    .disabled(!gameCenterManager.isAuthenticated)
+                    .opacity(gameCenterManager.isAuthenticated ? 1.0 : 0.7)
+                    .animation(.easeInOut(duration: 0.3), value: gameCenterManager.isAuthenticated)
                 }
-                .disabled(!gameCenterManager.isAuthenticated)
-                .opacity(gameCenterManager.isAuthenticated ? 1.0 : 0.7)
-                .animation(.easeInOut(duration: 0.3), value: gameCenterManager.isAuthenticated)
                 
                 // Game Center Status Indicator
                 if !gameCenterManager.isAuthenticated {

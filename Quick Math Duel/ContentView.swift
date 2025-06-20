@@ -1225,8 +1225,8 @@ struct GameOverView: View {
                             .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
                     }
                 
-                    // Continue with Ad Button (if ads not removed)
-                    if !iapManager.adsRemoved && adManager.rewardedAdReady {
+                    // Continue with Ad Button (if ads not removed and haven't used extra life yet)
+                    if !iapManager.adsRemoved && adManager.rewardedAdReady && !gameModel.hasUsedExtraLife {
                         Button(action: {
                             adManager.showRewardedAd { success in
                                 if success {
@@ -1254,6 +1254,21 @@ struct GameOverView: View {
                                 )
                                 .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
                         }
+                    } else if !iapManager.adsRemoved && gameModel.hasUsedExtraLife {
+                        // Show message that they've already used their continuation
+                        VStack(spacing: 5) {
+                            Text("⚠️ CONTINUATION USED")
+                                .font(.system(size: deviceSize == .iPad ? 16 : deviceSize == .compact ? 10 : 12, weight: .bold, design: .monospaced))
+                                .foregroundColor(.orange)
+                            Text("ONE EXTRA LIFE PER GAME")
+                                .font(.system(size: deviceSize == .iPad ? 12 : deviceSize == .compact ? 8 : 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Color.orange.opacity(0.2))
+                        .overlay(Rectangle().stroke(Color.orange, lineWidth: 2))
                     }
                 
                     // Try Again Button
@@ -1347,6 +1362,8 @@ class GameModel: ObservableObject {
     @Published var slowTimerActive: Bool = false
     @Published var slowTimerQuestionsRemaining: Int = 0
     @Published var hintUsedThisQuestion: Bool = false
+    @Published var hasUsedExtraLife: Bool = false // Track if player used ad continuation this session
+    @Published var achievedNewBestThisSession: Bool = false // Track if best score was updated this session
     @Published var bestScore: Int {
         didSet {
             UserDefaults.standard.set(bestScore, forKey: "BestScore")
@@ -1380,6 +1397,8 @@ class GameModel: ObservableObject {
         slowTimerActive = false
         slowTimerQuestionsRemaining = 0
         hintUsedThisQuestion = false
+        hasUsedExtraLife = false // Reset extra life tracking for new game
+        achievedNewBestThisSession = false // Reset best score tracking for new game
         
         // Track play session for weekly streak
         trackPlaySession()
@@ -1395,14 +1414,32 @@ class GameModel: ObservableObject {
     }
     
     func backToMenu() {
+        // If coming from game over and hasn't used extra life, submit score now
+        if gameState == .gameOver && !hasUsedExtraLife {
+            submitFinalScore()
+        }
+        
         gameState = .menu
         stopTimer()
+    }
+    
+    private func submitFinalScore() {
+        // Submit the current session's score to Game Center
+        let sessionScore = score
+        print("🎮 Submitting final session score to Game Center: \(sessionScore)")
+        
+        if achievedNewBestThisSession {
+            print("🏆 New best score achieved this session!")
+        }
+        
+        gameCenterManager?.submitScore(sessionScore)
     }
     
     func continueWithExtraLife() {
         // Continue game with one extra life from rewarded ad
         lives = 1
         gameState = .playing
+        hasUsedExtraLife = true // Mark that player has used extra life continuation
         stopTimer() // Ensure any existing timer is stopped
         nextQuestion()
     }
@@ -1436,8 +1473,9 @@ class GameModel: ObservableObject {
             score += 1
             if score > bestScore {
                 bestScore = score
-                // Submit new high score to Game Center
-                gameCenterManager?.submitScore(bestScore)
+                achievedNewBestThisSession = true
+                // Don't submit to Game Center immediately - wait for session end
+                // This prevents multiple submissions during a single game session
             }
             nextQuestion()
         } else {
@@ -1602,8 +1640,16 @@ class GameModel: ObservableObject {
         gameState = .gameOver
         stopTimer()
         
-        // Submit final score to Game Center (even if not a new high score)
-        gameCenterManager?.submitScore(score)
+        // Only submit score if this is the final game over
+        // (either they haven't used extra life, or they have and this is their second death)
+        if !hasUsedExtraLife {
+            // This is their first death - don't submit yet, they might watch an ad
+            print("🎮 First death - not submitting score yet (might continue with ad)")
+        } else {
+            // They already used extra life and died again - submit final score
+            print("🎮 Final death after ad continuation - submitting score: \(score)")
+            gameCenterManager?.submitScore(score)
+        }
         
         // Game over sound - "Sad trombone" effect
         playGameOverSound()

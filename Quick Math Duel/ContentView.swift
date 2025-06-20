@@ -394,6 +394,52 @@ struct MenuView: View {
         case .iPad: return 60
         }
     }
+    
+    private var gcStatusFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 8
+        case .regular: return 10
+        case .large: return 10
+        case .iPad: return 12
+        }
+    }
+    
+    // Top menu button sizing functions
+    private func topMenuFontSize(for deviceSize: DeviceSize) -> CGFloat {
+        switch deviceSize {
+        case .compact: return 20
+        case .regular: return 24
+        case .large: return 24
+        case .iPad: return 32
+        }
+    }
+    
+    private func topMenuButtonSize(for deviceSize: DeviceSize) -> CGFloat {
+        switch deviceSize {
+        case .compact: return 35
+        case .regular: return 40
+        case .large: return 40
+        case .iPad: return 55
+        }
+    }
+    
+    private func topMenuHorizontalPadding(for deviceSize: DeviceSize) -> CGFloat {
+        switch deviceSize {
+        case .compact: return 15
+        case .regular: return 20
+        case .large: return 20
+        case .iPad: return 30
+        }
+    }
+    
+    private func topMenuTopPadding(for deviceSize: DeviceSize) -> CGFloat {
+        switch deviceSize {
+        case .compact: return 8
+        case .regular: return 10
+        case .large: return 10
+        case .iPad: return 15
+        }
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -649,7 +695,7 @@ struct MenuView: View {
                 // Game Center Status Indicator
                 if !gameCenterManager.isAuthenticated {
                     Text("🎮 CONNECT TO GAME CENTER TO VIEW LEADERBOARD")
-                        .font(.system(size: deviceSize == .iPad ? 12 : deviceSize == .compact ? 8 : 10, weight: .bold, design: .monospaced))
+                        .font(.system(size: gcStatusFontSize, weight: .bold, design: .monospaced))
                         .foregroundColor(.orange)
                         .multilineTextAlignment(.center)
                         .opacity(0.8)
@@ -689,16 +735,16 @@ struct MenuView: View {
                         showingShop = true
                     }) {
                         Text("⋯")
-                            .font(.system(size: topDeviceSize == .iPad ? 32 : topDeviceSize == .compact ? 20 : 24, weight: .black))
+                            .font(.system(size: topMenuFontSize(for: topDeviceSize), weight: .black))
                             .foregroundColor(.white)
-                            .frame(width: topDeviceSize == .iPad ? 55 : topDeviceSize == .compact ? 35 : 40, 
-                                   height: topDeviceSize == .iPad ? 55 : topDeviceSize == .compact ? 35 : 40)
+                            .frame(width: topMenuButtonSize(for: topDeviceSize), 
+                                   height: topMenuButtonSize(for: topDeviceSize))
                             .background(Color.gray.opacity(0.8))
                             .overlay(Rectangle().stroke(Color.white, lineWidth: 2))
                     }
                 }
-                .padding(.horizontal, topDeviceSize == .iPad ? 30 : topDeviceSize == .compact ? 15 : 20)
-                .padding(.top, topDeviceSize == .iPad ? 15 : topDeviceSize == .compact ? 8 : 10)
+                .padding(.horizontal, topMenuHorizontalPadding(for: topDeviceSize))
+                .padding(.top, topMenuTopPadding(for: topDeviceSize))
                 .background(Color.clear)
             }
             .frame(height: 60)
@@ -1670,7 +1716,9 @@ class GameModel: ObservableObject {
             print("🏆 New best score achieved this session!")
         }
         
-        gameCenterManager?.submitScore(sessionScore)
+        Task { @MainActor in
+            gameCenterManager?.submitScore(sessionScore)
+        }
     }
     
     func continueWithExtraLife() {
@@ -1886,7 +1934,9 @@ class GameModel: ObservableObject {
         } else {
             // They already used extra life and died again - submit final score
             print("🎮 Final death after ad continuation - submitting score: \(score)")
-            gameCenterManager?.submitScore(score)
+            Task { @MainActor in
+                gameCenterManager?.submitScore(score)
+            }
         }
         
         // Game over sound - "Sad trombone" effect

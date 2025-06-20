@@ -1,13 +1,13 @@
 //
-//  Quick_Math_DuelUITestsLaunchTests.swift
-//  Quick Math DuelUITests
+//  Quick_Math_ChallengeUITestsLaunchTests.swift
+//  Quick Math ChallengeUITests
 //
 //  Created by Alex Lee on 17/6/2025.
 //
 
 import XCTest
 
-final class Quick_Math_DuelUITestsLaunchTests: XCTestCase {
+final class Quick_Math_ChallengeUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

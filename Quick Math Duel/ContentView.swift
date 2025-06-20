@@ -10,6 +10,7 @@ import StoreKit
 import UserNotifications
 import AudioToolbox
 import GoogleMobileAds
+import GameKit
 
 // MARK: - Device Size Classification
 enum DeviceSize {
@@ -40,6 +41,7 @@ struct ContentView: View {
     @StateObject private var adManager = AdManager()
     @StateObject private var iapManager = IAPManager()
     @StateObject private var notificationManager = NotificationManager()
+    @StateObject private var gameCenterManager = GameCenterManager()
     
     var body: some View {
         GeometryReader { geometry in
@@ -71,6 +73,7 @@ struct ContentView: View {
             iapManager.loadProducts()
             notificationManager.requestPermissions()
             gameModel.setNotificationManager(notificationManager)
+            gameModel.setGameCenterManager(gameCenterManager)
         }
     }
     
@@ -80,7 +83,7 @@ struct ContentView: View {
         let maxWidth: CGFloat = deviceSize == .iPad ? 600 : .infinity
             
         if gameModel.gameState == .menu {
-            MenuView(gameModel: gameModel, iapManager: iapManager, notificationManager: notificationManager, deviceSize: deviceSize)
+            MenuView(gameModel: gameModel, iapManager: iapManager, notificationManager: notificationManager, gameCenterManager: gameCenterManager, deviceSize: deviceSize)
                 .frame(maxWidth: maxWidth, maxHeight: .infinity)
         } else if gameModel.gameState == .playing {
             GameView(gameModel: gameModel, deviceSize: deviceSize)
@@ -96,6 +99,7 @@ struct MenuView: View {
     @ObservedObject var gameModel: GameModel
     @ObservedObject var iapManager: IAPManager
     @ObservedObject var notificationManager: NotificationManager
+    @ObservedObject var gameCenterManager: GameCenterManager
     let deviceSize: DeviceSize
     @State private var showingShop = false
     @State private var titlePulse = false
@@ -382,6 +386,44 @@ struct MenuView: View {
                 .disabled(gameModel.bestScore == 0)
                 .opacity(gameModel.bestScore > 0 ? 1.0 : 0.7)
                 .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore > 0)
+                
+                // Game Center Leaderboard Button
+                Button(action: {
+                    gameCenterManager.showLeaderboard()
+                }) {
+                    Text("🏆 LEADERBOARD")
+                        .font(.system(size: deviceSize == .iPad ? 18 : deviceSize == .compact ? 12 : 14, weight: .black, design: .monospaced))
+                        .foregroundColor(.black)
+                        .frame(width: buttonWidth, height: buttonHeight)
+                        .background(
+                            ZStack {
+                                Rectangle()
+                                    .fill(gameCenterManager.isAuthenticated ? Color.yellow : Color.yellow.opacity(0.6))
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.3))
+                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
+                                    .offset(y: -(buttonHeight / 2.5))
+                                Rectangle()
+                                    .fill(Color.black.opacity(0.3))
+                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
+                                    .offset(y: (buttonHeight / 2.5))
+                            }
+                        )
+                        .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
+                }
+                .disabled(!gameCenterManager.isAuthenticated)
+                .opacity(gameCenterManager.isAuthenticated ? 1.0 : 0.7)
+                .animation(.easeInOut(duration: 0.3), value: gameCenterManager.isAuthenticated)
+                
+                // Game Center Status Indicator
+                if !gameCenterManager.isAuthenticated {
+                    Text("🎮 CONNECT TO GAME CENTER TO VIEW LEADERBOARD")
+                        .font(.system(size: deviceSize == .iPad ? 12 : deviceSize == .compact ? 8 : 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(.orange)
+                        .multilineTextAlignment(.center)
+                        .opacity(0.8)
+                        .padding(.horizontal, 20)
+                }
                 
                 // Weekly Streak Display
                 if notificationManager.weeklyStreak > 0 {
@@ -1313,6 +1355,7 @@ class GameModel: ObservableObject {
     
     private var timer: Timer?
     private var notificationManager: NotificationManager?
+    private var gameCenterManager: GameCenterManager?
     
     init() {
         self.bestScore = UserDefaults.standard.integer(forKey: "BestScore")
@@ -1323,6 +1366,10 @@ class GameModel: ObservableObject {
     
     func setNotificationManager(_ manager: NotificationManager) {
         self.notificationManager = manager
+    }
+    
+    func setGameCenterManager(_ manager: GameCenterManager) {
+        self.gameCenterManager = manager
     }
     
     func startGame() {
@@ -1389,6 +1436,8 @@ class GameModel: ObservableObject {
             score += 1
             if score > bestScore {
                 bestScore = score
+                // Submit new high score to Game Center
+                gameCenterManager?.submitScore(bestScore)
             }
             nextQuestion()
         } else {
@@ -1552,6 +1601,10 @@ class GameModel: ObservableObject {
     private func gameOver() {
         gameState = .gameOver
         stopTimer()
+        
+        // Submit final score to Game Center (even if not a new high score)
+        gameCenterManager?.submitScore(score)
+        
         // Game over sound - "Sad trombone" effect
         playGameOverSound()
         playHapticFeedback(.error)
@@ -2045,6 +2098,87 @@ class NotificationManager: ObservableObject {
     func updateStreakOnPlay() {
         updateWeeklyStreak()
         scheduleWeeklyReminder() // Update notification message with current streak
+    }
+}
+
+// MARK: - Game Center Manager
+
+class GameCenterManager: ObservableObject {
+    @Published var isAuthenticated = false
+    @Published var showingLeaderboard = false
+    
+    static let leaderboardID = "quick_math_challenge_leaderboard"
+    
+    init() {
+        authenticateUser()
+    }
+    
+    func authenticateUser() {
+        GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Game Center authentication failed: \(error.localizedDescription)")
+                    self?.isAuthenticated = false
+                } else if let viewController = viewController {
+                    // Present authentication view controller
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let rootViewController = windowScene.windows.first?.rootViewController {
+                        rootViewController.present(viewController, animated: true)
+                    }
+                } else if GKLocalPlayer.local.isAuthenticated {
+                    print("✅ Game Center authenticated successfully!")
+                    self?.isAuthenticated = true
+                } else {
+                    print("⚠️ Game Center authentication cancelled")
+                    self?.isAuthenticated = false
+                }
+            }
+        }
+    }
+    
+    func submitScore(_ score: Int) {
+        guard isAuthenticated else {
+            print("⚠️ Cannot submit score - not authenticated with Game Center")
+            return
+        }
+        
+        let scoreReporter = GKScore(leaderboardIdentifier: Self.leaderboardID)
+        scoreReporter.value = Int64(score)
+        
+        GKScore.report([scoreReporter]) { error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error submitting score to Game Center: \(error.localizedDescription)")
+                } else {
+                    print("✅ Score \(score) submitted to Game Center successfully!")
+                }
+            }
+        }
+    }
+    
+    func showLeaderboard() {
+        guard isAuthenticated else {
+            print("⚠️ Cannot show leaderboard - not authenticated with Game Center")
+            return
+        }
+        
+        let leaderboardVC = GKGameCenterViewController(leaderboardID: Self.leaderboardID, playerScope: .global, timeScope: .allTime)
+        leaderboardVC.gameCenterDelegate = GameCenterDelegate.shared
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            rootViewController.present(leaderboardVC, animated: true)
+        }
+    }
+}
+
+// MARK: - Game Center Delegate
+
+class GameCenterDelegate: NSObject, GKGameCenterControllerDelegate {
+    static let shared = GameCenterDelegate()
+    
+    func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
+        gameCenterViewController.dismiss(animated: true, completion: nil)
     }
 }
 

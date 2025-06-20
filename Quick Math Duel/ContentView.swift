@@ -141,33 +141,42 @@ struct MenuView: View {
                 }
             }()
             
+            // Calculate layout values first to avoid complex expressions
+            let logoSpacing: CGFloat = {
+                switch deviceSize {
+                case .compact: return 3
+                case .regular: return 5
+                case .large: return 6
+                case .iPad: return 8
+                }
+            }()
+            let logoMaxWidth: CGFloat = {
+                switch deviceSize {
+                case .compact: return 800
+                case .regular: return 1000
+                case .large: return 1200
+                case .iPad: return 1400
+                }
+            }()
+            let logoMaxHeight: CGFloat = {
+                switch deviceSize {
+                case .compact: return 220
+                case .regular: return 280
+                case .large: return 320
+                case .iPad: return 400
+                }
+            }()
+            let logoPaddingTop: CGFloat = {
+                switch deviceSize {
+                case .compact: return -10
+                case .regular: return -15
+                case .large: return -15
+                case .iPad: return -20
+                }
+            }()
+            
             VStack(spacing: 0) {
                 // Top section with title and tagline - moved up to give more space below
-                let logoSpacing: CGFloat = {
-                    switch deviceSize {
-                    case .compact: return 3
-                    case .regular: return 5
-                    case .large: return 6
-                    case .iPad: return 8
-                    }
-                }()
-                let logoMaxWidth: CGFloat = {
-                    switch deviceSize {
-                    case .compact: return 800
-                    case .regular: return 1000
-                    case .large: return 1200
-                    case .iPad: return 1400
-                    }
-                }()
-                let logoMaxHeight: CGFloat = {
-                    switch deviceSize {
-                    case .compact: return 220
-                    case .regular: return 280
-                    case .large: return 320
-                    case .iPad: return 400
-                    }
-                }()
-                
                 VStack(spacing: logoSpacing) {
                     // Logo image (centered)
                     Image("QuickMathChallenge_Logo_CleanTransparent")
@@ -183,7 +192,7 @@ struct MenuView: View {
                         .foregroundColor(.yellow)
                         .tracking(2)
                 }
-                .padding(.top, deviceSize == .iPad ? -20 : deviceSize == .compact ? -10 : -15)
+                .padding(.top, logoPaddingTop)
             
             Spacer()
             
@@ -219,21 +228,45 @@ struct MenuView: View {
                         .frame(width: buttonWidth, height: buttonHeight)
                         .background(
                             ZStack {
+                                let shadowHeight: CGFloat = {
+                                    switch deviceSize {
+                                    case .compact: return 3
+                                    case .regular: return 4
+                                    case .large: return 4
+                                    case .iPad: return 6
+                                    }
+                                }()
+                                let strokeWidth: CGFloat = {
+                                    switch deviceSize {
+                                    case .compact: return 2
+                                    case .regular: return 3
+                                    case .large: return 3
+                                    case .iPad: return 4
+                                    }
+                                }()
+                                
                                 Rectangle()
                                     .fill(Color.green)
                                 Rectangle()
                                     .fill(Color.white.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
+                                    .frame(height: shadowHeight)
                                     .offset(y: -(buttonHeight / 2.4))
                                 Rectangle()
                                     .fill(Color.black.opacity(0.3))
-                                    .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
+                                    .frame(height: shadowHeight)
                                     .offset(y: (buttonHeight / 2.4))
                             }
                         )
                         .overlay(
                             Rectangle()
-                                .stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3)
+                                .stroke(Color.white, lineWidth: {
+                                    switch deviceSize {
+                                    case .compact: return 2
+                                    case .regular: return 3
+                                    case .large: return 3
+                                    case .iPad: return 4
+                                    }
+                                }())
                         )
                     }
                     .scaleEffect(buttonScale)
@@ -279,18 +312,67 @@ struct MenuView: View {
                                         showingShop = true
                                     }
                                 }) {
-                                    VStack(spacing: deviceSize == .iPad ? 8 : deviceSize == .compact ? 3 : 5) {
+                                    let powerUpIconSpacing: CGFloat = {
+                                        switch deviceSize {
+                                        case .compact: return 3
+                                        case .regular: return 5
+                                        case .large: return 5
+                                        case .iPad: return 8
+                                        }
+                                    }()
+                                    let powerUpIconSize: CGFloat = {
+                                        switch deviceSize {
+                                        case .compact: return 16
+                                        case .regular: return 20
+                                        case .large: return 20
+                                        case .iPad: return 28
+                                        }
+                                    }()
+                                    let powerUpCountSize: CGFloat = {
+                                        switch deviceSize {
+                                        case .compact: return 12
+                                        case .regular: return 16
+                                        case .large: return 16
+                                        case .iPad: return 22
+                                        }
+                                    }()
+                                    let powerUpLabelSize: CGFloat = {
+                                        switch deviceSize {
+                                        case .compact: return 7
+                                        case .regular: return 9
+                                        case .large: return 9
+                                        case .iPad: return 12
+                                        }
+                                    }()
+                                    let powerUpHPadding: CGFloat = {
+                                        switch deviceSize {
+                                        case .compact: return 8
+                                        case .regular: return 12
+                                        case .large: return 12
+                                        case .iPad: return 18
+                                        }
+                                    }()
+                                    let powerUpVPadding: CGFloat = {
+                                        switch deviceSize {
+                                        case .compact: return 6
+                                        case .regular: return 8
+                                        case .large: return 8
+                                        case .iPad: return 12
+                                        }
+                                    }()
+                                    
+                                    VStack(spacing: powerUpIconSpacing) {
                                         Text("💡")
-                                            .font(.system(size: deviceSize == .iPad ? 28 : deviceSize == .compact ? 16 : 20))
+                                            .font(.system(size: powerUpIconSize))
                                         Text("\(gameModel.hintsAvailable)")
-                                            .font(.system(size: deviceSize == .iPad ? 22 : deviceSize == .compact ? 12 : 16, weight: .bold, design: .monospaced))
+                                            .font(.system(size: powerUpCountSize, weight: .bold, design: .monospaced))
                                             .foregroundColor(gameModel.hintsAvailable <= 2 ? .red : .yellow)
                                         Text("HINTS")
-                                            .font(.system(size: deviceSize == .iPad ? 12 : deviceSize == .compact ? 7 : 9, weight: .bold, design: .monospaced))
+                                            .font(.system(size: powerUpLabelSize, weight: .bold, design: .monospaced))
                                             .foregroundColor(.orange)
                                     }
-                                    .padding(.horizontal, deviceSize == .iPad ? 18 : deviceSize == .compact ? 8 : 12)
-                                    .padding(.vertical, deviceSize == .iPad ? 12 : deviceSize == .compact ? 6 : 8)
+                                    .padding(.horizontal, powerUpHPadding)
+                                    .padding(.vertical, powerUpVPadding)
                                     .background(Color.orange.opacity(gameModel.hintsAvailable <= 2 ? 0.8 : 0.3))
                                     .overlay(Rectangle().stroke(gameModel.hintsAvailable <= 2 ? Color.red : Color.orange, lineWidth: gameModel.hintsAvailable <= 2 ? 2 : 1))
                                     .scaleEffect(gameModel.hintsAvailable <= 2 ? 1.05 : 1.0)

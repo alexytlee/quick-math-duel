@@ -343,7 +343,7 @@ struct MenuView: View {
             // Bottom section with scores and achievements
             VStack(spacing: 15) {
                 // High Score Display (always visible)
-                VStack(spacing: 5) {
+                VStack(spacing: 3) {
                     Text("🏆 HIGH SCORE")
                         .font(.system(size: deviceSize == .iPad ? 16 : deviceSize == .compact ? 10 : 12, weight: .bold, design: .monospaced))
                         .foregroundColor(.yellow)
@@ -352,6 +352,26 @@ struct MenuView: View {
                         .font(.system(size: deviceSize == .iPad ? 36 : deviceSize == .compact ? 24 : 28, weight: .black, design: .monospaced))
                         .foregroundColor(gameModel.bestScore > 0 ? .white : .gray)
                         .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore)
+                    
+                    // Subtle global ranking hint
+                    if gameCenterManager.isAuthenticated && gameModel.bestScore > 0 {
+                        Group {
+                            if let rank = gameCenterManager.globalRank, let total = gameCenterManager.totalPlayers {
+                                let percentage = Int(Double(rank) / Double(total) * 100)
+                                Text("GLOBAL: #\(rank) • TOP \(100 - percentage)%")
+                                    .font(.system(size: deviceSize == .iPad ? 9 : deviceSize == .compact ? 6 : 7, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.cyan.opacity(0.8))
+                                    .tracking(0.5)
+                            } else {
+                                Text("CALCULATING RANK...")
+                                    .font(.system(size: deviceSize == .iPad ? 9 : deviceSize == .compact ? 6 : 7, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.gray.opacity(0.6))
+                                    .tracking(0.5)
+                            }
+                        }
+                        .transition(.opacity)
+                        .animation(.easeInOut(duration: 0.5), value: gameCenterManager.globalRank)
+                    }
                 }
                 .frame(width: buttonWidth, height: buttonHeight)
                 .background(gameModel.bestScore > 0 ? Color.red.opacity(0.8) : Color.gray.opacity(0.3))
@@ -524,6 +544,11 @@ struct MenuView: View {
                 withAnimation(.spring(response: 0.8, dampingFraction: 0.7)) {
                     powerUpsVisible = true
                 }
+            }
+            
+            // Refresh global rank when returning to menu
+            if gameCenterManager.isAuthenticated && gameModel.bestScore > 0 {
+                gameCenterManager.fetchUserRank()
             }
         }
     }
@@ -2190,6 +2215,8 @@ class NotificationManager: ObservableObject {
 class GameCenterManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var showingLeaderboard = false
+    @Published var globalRank: Int? = nil
+    @Published var totalPlayers: Int? = nil
     
     static let leaderboardID = "quick_math_challenge_leaderboard"
     
@@ -2212,6 +2239,8 @@ class GameCenterManager: ObservableObject {
                 } else if GKLocalPlayer.local.isAuthenticated {
                     print("✅ Game Center authenticated successfully!")
                     self?.isAuthenticated = true
+                    // Fetch user's current rank
+                    self?.fetchUserRank()
                 } else {
                     print("⚠️ Game Center authentication cancelled")
                     self?.isAuthenticated = false
@@ -2229,12 +2258,16 @@ class GameCenterManager: ObservableObject {
         let scoreReporter = GKScore(leaderboardIdentifier: Self.leaderboardID)
         scoreReporter.value = Int64(score)
         
-        GKScore.report([scoreReporter]) { error in
+        GKScore.report([scoreReporter]) { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Error submitting score to Game Center: \(error.localizedDescription)")
                 } else {
                     print("✅ Score \(score) submitted to Game Center successfully!")
+                    // Fetch updated rank after score submission
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        self?.fetchUserRank()
+                    }
                 }
             }
         }
@@ -2252,6 +2285,37 @@ class GameCenterManager: ObservableObject {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootViewController = windowScene.windows.first?.rootViewController {
             rootViewController.present(leaderboardVC, animated: true)
+        }
+    }
+    
+    func fetchUserRank() {
+        guard isAuthenticated else {
+            print("⚠️ Cannot fetch rank - not authenticated with Game Center")
+            return
+        }
+        
+        let leaderboard = GKLeaderboard()
+        leaderboard.identifier = Self.leaderboardID
+        leaderboard.playerScope = .global
+        leaderboard.timeScope = .allTime
+        leaderboard.range = NSRange(location: 1, length: 1)
+        
+        leaderboard.loadScores { [weak self] scores, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error fetching user rank: \(error.localizedDescription)")
+                    self?.globalRank = nil
+                    self?.totalPlayers = nil
+                } else if let localPlayerScore = leaderboard.localPlayerScore {
+                    self?.globalRank = localPlayerScore.rank
+                    self?.totalPlayers = leaderboard.maxRange
+                    print("✅ User rank fetched: #\(localPlayerScore.rank) out of \(leaderboard.maxRange)")
+                } else {
+                    print("⚠️ No score found for local player")
+                    self?.globalRank = nil
+                    self?.totalPlayers = nil
+                }
+            }
         }
     }
 }

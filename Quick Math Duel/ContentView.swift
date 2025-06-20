@@ -43,6 +43,10 @@ struct ContentView: View {
     @StateObject private var notificationManager = NotificationManager()
     @StateObject private var gameCenterManager = GameCenterManager()
     
+    private func contentMaxWidth(for deviceSize: DeviceSize) -> CGFloat {
+        deviceSize == .iPad ? 600 : .infinity
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -80,7 +84,7 @@ struct ContentView: View {
     @ViewBuilder
     private func contentView(geometry: GeometryProxy) -> some View {
         let deviceSize = DeviceSize.classify(geometry: geometry)
-        let maxWidth: CGFloat = deviceSize == .iPad ? 600 : .infinity
+        let maxWidth: CGFloat = contentMaxWidth(for: deviceSize)
             
         if gameModel.gameState == .menu {
             MenuView(gameModel: gameModel, iapManager: iapManager, notificationManager: notificationManager, gameCenterManager: gameCenterManager, deviceSize: deviceSize)
@@ -440,6 +444,83 @@ struct MenuView: View {
         case .iPad: return 15
         }
     }
+    
+    @ViewBuilder
+    private var powerUpsSection: some View {
+        if powerUpsVisible {
+            VStack(spacing: powerUpSpacing) {
+                Text("⚡ YOUR POWER-UPS")
+                    .font(.system(size: powerUpFontSize, weight: .bold, design: .monospaced))
+                    .foregroundColor(.cyan)
+                    .tracking(1)
+                
+                HStack(spacing: powerUpHSpacing) {
+                    // Hints Power-up (tappable to open shop)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            showingShop = true
+                        }
+                    }) {
+                        VStack(spacing: powerUpIconSpacing) {
+                            Text("💡")
+                                .font(.system(size: powerUpIconSize))
+                            Text("\(gameModel.hintsAvailable)")
+                                .font(.system(size: powerUpCountSize, weight: .bold, design: .monospaced))
+                                .foregroundColor(gameModel.hintsAvailable <= 2 ? .red : .yellow)
+                            Text("HINTS")
+                                .font(.system(size: powerUpLabelSize, weight: .bold, design: .monospaced))
+                                .foregroundColor(.orange)
+                        }
+                        .padding(.horizontal, powerUpHPadding)
+                        .padding(.vertical, powerUpVPadding)
+                        .background(Color.orange.opacity(gameModel.hintsAvailable <= 2 ? 0.8 : 0.3))
+                        .overlay(Rectangle().stroke(gameModel.hintsAvailable <= 2 ? Color.red : Color.orange, lineWidth: gameModel.hintsAvailable <= 2 ? 2 : 1))
+                        .scaleEffect(gameModel.hintsAvailable <= 2 ? 1.05 : 1.0)
+                        .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: gameModel.hintsAvailable <= 2)
+                    }
+                
+                    // Slow Timers Power-up (tappable to open shop)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            showingShop = true
+                        }
+                    }) {
+                        VStack(spacing: powerUpIconSpacing) {
+                            Text("🐌")
+                                .font(.system(size: powerUpIconSize))
+                            Text("\(gameModel.slowTimersAvailable)")
+                                .font(.system(size: powerUpCountSize, weight: .bold, design: .monospaced))
+                                .foregroundColor(gameModel.slowTimersAvailable <= 2 ? .red : .green)
+                            Text("SLOW")
+                                .font(.system(size: powerUpLabelSize, weight: .bold, design: .monospaced))
+                                .foregroundColor(.green)
+                        }
+                        .padding(.horizontal, powerUpHPadding)
+                        .padding(.vertical, powerUpVPadding)
+                        .background(Color.green.opacity(gameModel.slowTimersAvailable <= 2 ? 0.8 : 0.3))
+                        .overlay(Rectangle().stroke(gameModel.slowTimersAvailable <= 2 ? Color.red : Color.green, lineWidth: gameModel.slowTimersAvailable <= 2 ? 2 : 1))
+                        .scaleEffect(gameModel.slowTimersAvailable <= 2 ? 1.05 : 1.0)
+                        .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: gameModel.slowTimersAvailable <= 2)
+                    }
+                }
+                
+                // Low power-up warning
+                if gameModel.hintsAvailable <= 2 || gameModel.slowTimersAvailable <= 2 {
+                    Text("⚠️ RUNNING LOW! TAP POWER-UPS TO REFILL")
+                        .font(.system(size: powerUpFontSize, weight: .bold, design: .monospaced))
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .opacity(0.8)
+                }
+            }
+            .transition(.asymmetric(
+                insertion: .scale.combined(with: .opacity),
+                removal: .scale.combined(with: .opacity)
+            ))
+        }
+    }
+    
+
 
     var body: some View {
         GeometryReader { geometry in
@@ -509,84 +590,14 @@ struct MenuView: View {
                     .animation(.easeInOut(duration: 0.1), value: buttonScale)
                 
                     // Power-ups display (moved from shop for conversion)
-                    if powerUpsVisible {
-                        VStack(spacing: powerUpSpacing) {
-                            Text("⚡ YOUR POWER-UPS")
-                                .font(.system(size: powerUpFontSize, weight: .bold, design: .monospaced))
-                                .foregroundColor(.cyan)
-                                .tracking(1)
-                            
-                            HStack(spacing: powerUpHSpacing) {
-                                // Hints Power-up (tappable to open shop)
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                        showingShop = true
-                                    }
-                                }) {
-                                    VStack(spacing: powerUpIconSpacing) {
-                                        Text("💡")
-                                            .font(.system(size: powerUpIconSize))
-                                        Text("\(gameModel.hintsAvailable)")
-                                            .font(.system(size: powerUpCountSize, weight: .bold, design: .monospaced))
-                                            .foregroundColor(gameModel.hintsAvailable <= 2 ? .red : .yellow)
-                                        Text("HINTS")
-                                            .font(.system(size: powerUpLabelSize, weight: .bold, design: .monospaced))
-                                            .foregroundColor(.orange)
-                                    }
-                                    .padding(.horizontal, powerUpHPadding)
-                                    .padding(.vertical, powerUpVPadding)
-                                    .background(Color.orange.opacity(gameModel.hintsAvailable <= 2 ? 0.8 : 0.3))
-                                    .overlay(Rectangle().stroke(gameModel.hintsAvailable <= 2 ? Color.red : Color.orange, lineWidth: gameModel.hintsAvailable <= 2 ? 2 : 1))
-                                    .scaleEffect(gameModel.hintsAvailable <= 2 ? 1.05 : 1.0)
-                                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: gameModel.hintsAvailable <= 2)
-                                }
-                            
-                                // Slow Timers Power-up (tappable to open shop)
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                        showingShop = true
-                                    }
-                                }) {
-                                    VStack(spacing: powerUpIconSpacing) {
-                                        Text("🐌")
-                                            .font(.system(size: powerUpIconSize))
-                                        Text("\(gameModel.slowTimersAvailable)")
-                                            .font(.system(size: powerUpCountSize, weight: .bold, design: .monospaced))
-                                            .foregroundColor(gameModel.slowTimersAvailable <= 2 ? .red : .green)
-                                        Text("SLOW")
-                                            .font(.system(size: powerUpLabelSize, weight: .bold, design: .monospaced))
-                                            .foregroundColor(.green)
-                                    }
-                                    .padding(.horizontal, powerUpHPadding)
-                                    .padding(.vertical, powerUpVPadding)
-                                    .background(Color.green.opacity(gameModel.slowTimersAvailable <= 2 ? 0.8 : 0.3))
-                                    .overlay(Rectangle().stroke(gameModel.slowTimersAvailable <= 2 ? Color.red : Color.green, lineWidth: gameModel.slowTimersAvailable <= 2 ? 2 : 1))
-                                    .scaleEffect(gameModel.slowTimersAvailable <= 2 ? 1.05 : 1.0)
-                                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: gameModel.slowTimersAvailable <= 2)
-                                }
-                        }
-                        
-                            // Low power-up warning
-                            if gameModel.hintsAvailable <= 2 || gameModel.slowTimersAvailable <= 2 {
-                                Text("⚠️ RUNNING LOW! TAP POWER-UPS TO REFILL")
-                                    .font(.system(size: powerUpFontSize, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.red)
-                                    .multilineTextAlignment(.center)
-                                    .opacity(0.8)
-                            }
-                        }
-                        .transition(.asymmetric(
-                            insertion: .scale.combined(with: .opacity),
-                            removal: .scale.combined(with: .opacity)
-                        ))
-                    }
+                    powerUpsSection
             }
             
             Spacer()
             
-            // Bottom section with scores and achievements
+                        // Bottom section with scores and achievements
             VStack(spacing: 15) {
-                // High Score Display (always visible)
+                // High Score Display
                 VStack(spacing: 3) {
                     Text("🏆 HIGH SCORE")
                         .font(.system(size: highScoreFontSize, weight: .bold, design: .monospaced))
@@ -596,38 +607,14 @@ struct MenuView: View {
                         .font(.system(size: highScoreNumberSize, weight: .black, design: .monospaced))
                         .foregroundColor(gameModel.bestScore > 0 ? .white : .gray)
                         .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore)
-                    
-                    // Subtle global ranking hint
-                    if gameCenterManager.isAuthenticated && gameModel.bestScore > 0 {
-                        Group {
-                            if let rank = gameCenterManager.globalRank, let total = gameCenterManager.totalPlayers {
-                                let percentage = Int(Double(rank) / Double(total) * 100)
-                                Text("GLOBAL: #\(rank) • TOP \(100 - percentage)%")
-                                    .font(.system(size: rankFontSize, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.cyan.opacity(0.8))
-                                    .tracking(0.5)
-                            } else {
-                                Text("CALCULATING RANK...")
-                                    .font(.system(size: rankFontSize, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.gray.opacity(0.6))
-                                    .tracking(0.5)
-                            }
-                        }
-                        .transition(.opacity)
-                        .animation(.easeInOut(duration: 0.5), value: gameCenterManager.globalRank)
-                    }
                 }
                 .frame(width: buttonWidth, height: buttonHeight)
                 .background(gameModel.bestScore > 0 ? Color.red.opacity(0.8) : Color.gray.opacity(0.3))
-                .overlay(
-                    Rectangle()
-                        .stroke(gameModel.bestScore > 0 ? Color.white : Color.gray, lineWidth: strokeWidth)
-                )
+                .overlay(Rectangle().stroke(gameModel.bestScore > 0 ? Color.white : Color.gray, lineWidth: strokeWidth))
                 .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore > 0)
                 
-                // Share Score and Leaderboard Buttons (side by side)
+                // Share and Leaderboard buttons
                 HStack(spacing: buttonSpacing) {
-                    // Share Button
                     ShareLink(item: shareMessage()) {
                         VStack(spacing: 2) {
                             Text("📤")
@@ -637,92 +624,36 @@ struct MenuView: View {
                                 .foregroundColor(.black)
                         }
                         .frame(width: smallButtonWidth, height: smallButtonHeight)
-                        .background(
-                            ZStack {
-                                Rectangle()
-                                    .fill(gameModel.bestScore > 0 ? Color.cyan : Color.cyan.opacity(0.6))
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.3))
-                                    .frame(height: smallShadowHeight)
-                                    .offset(y: -(smallButtonHeight / 2.5))
-                                Rectangle()
-                                    .fill(Color.black.opacity(0.3))
-                                    .frame(height: smallShadowHeight)
-                                    .offset(y: (smallButtonHeight / 2.5))
-                            }
-                        )
+                        .background(Color.cyan.opacity(gameModel.bestScore > 0 ? 1.0 : 0.6))
                         .overlay(Rectangle().stroke(Color.white, lineWidth: smallStrokeWidth))
                     }
                     .disabled(gameModel.bestScore == 0)
-                    .opacity(gameModel.bestScore > 0 ? 1.0 : 0.7)
-                    .animation(.easeInOut(duration: 0.3), value: gameModel.bestScore > 0)
                     
-                    // Leaderboard Button
-                    Button(action: {
-                        gameCenterManager.showLeaderboard()
+                    Button(action: { 
+                        if gameCenterManager.isAuthenticated {
+                            gameCenterManager.showLeaderboard()
+                        } else {
+                            // Retry authentication
+                            gameCenterManager.authenticateUser()
+                        }
                     }) {
                         VStack(spacing: 2) {
-                            Text("🏆")
+                            Text(gameCenterManager.isAuthenticated ? "🏆" : "🔄")
                                 .font(.system(size: smallButtonIconSize))
-                            Text("LEADERBOARD")
+                            Text(gameCenterManager.isAuthenticated ? "LEADERBOARD" : "SIGN IN")
                                 .font(.system(size: smallButtonFontSize, weight: .black, design: .monospaced))
                                 .foregroundColor(.black)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
                         .frame(width: smallButtonWidth, height: smallButtonHeight)
-                        .background(
-                            ZStack {
-                                Rectangle()
-                                    .fill(gameCenterManager.isAuthenticated ? Color.yellow : Color.yellow.opacity(0.6))
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.3))
-                                    .frame(height: smallShadowHeight)
-                                    .offset(y: -(smallButtonHeight / 2.5))
-                                Rectangle()
-                                    .fill(Color.black.opacity(0.3))
-                                    .frame(height: smallShadowHeight)
-                                    .offset(y: (smallButtonHeight / 2.5))
-                            }
-                        )
+                        .background(Color.yellow.opacity(gameCenterManager.isAuthenticated ? 1.0 : 0.6))
                         .overlay(Rectangle().stroke(Color.white, lineWidth: smallStrokeWidth))
                     }
-                    .disabled(!gameCenterManager.isAuthenticated)
-                    .opacity(gameCenterManager.isAuthenticated ? 1.0 : 0.7)
-                    .animation(.easeInOut(duration: 0.3), value: gameCenterManager.isAuthenticated)
                 }
-                
-                // Game Center Status Indicator
-                if !gameCenterManager.isAuthenticated {
-                    Text("🎮 CONNECT TO GAME CENTER TO VIEW LEADERBOARD")
-                        .font(.system(size: gcStatusFontSize, weight: .bold, design: .monospaced))
-                        .foregroundColor(.orange)
-                        .multilineTextAlignment(.center)
-                        .opacity(0.8)
-                        .padding(.horizontal, 20)
-                }
-                
-                // Weekly Streak Display
-                if notificationManager.weeklyStreak > 0 {
-                    VStack(spacing: 5) {
-                        Text("🔥 WEEKLY STREAK")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
-                            .foregroundColor(.orange)
-                        Text("\(notificationManager.weeklyStreak) WEEKS")
-                            .font(.system(size: 16, weight: .black, design: .monospaced))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 15)
-                    .padding(.vertical, 8)
-                    .background(Color.orange.opacity(0.8))
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.white, lineWidth: 2)
-                    )
-                }
-                }
-                .padding(.bottom, bottomPadding)
             }
+            }
+            .padding(.bottom, bottomPadding)
             .padding(mainPadding)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -1010,6 +941,16 @@ struct GameView: View {
     @State private var flashRed = false
     @State private var questionScale = 1.0
     @State private var answerButtonsVisible = false
+    
+    // Computed properties for responsive design
+    private var gameViewMainPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 10
+        case .regular: return 15
+        case .large: return 15
+        case .iPad: return 30
+        }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -1330,7 +1271,7 @@ struct GameView: View {
             
                 Spacer()
             }
-            .padding(deviceSize == .iPad ? 30 : deviceSize == .compact ? 10 : 15)
+            .padding(gameViewMainPadding)
             .overlay(
                 // Red flash effect for wrong answers
                 Rectangle()
@@ -1381,6 +1322,106 @@ struct GameOverView: View {
     @ObservedObject var adManager: AdManager
     @ObservedObject var iapManager: IAPManager
     let deviceSize: DeviceSize
+    
+    // Computed properties for responsive design
+    private var gameOverTitleFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 14
+        case .regular: return 16
+        case .large: return 16
+        case .iPad: return 22
+        }
+    }
+    
+    private var gameOverHPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 20
+        case .regular: return 30
+        case .large: return 30
+        case .iPad: return 40
+        }
+    }
+    
+    private var gameOverVPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 10
+        case .regular: return 15
+        case .large: return 15
+        case .iPad: return 20
+        }
+    }
+    
+    private var gameOverStrokeWidth: CGFloat {
+        switch deviceSize {
+        case .compact: return 2
+        case .regular: return 3
+        case .large: return 3
+        case .iPad: return 4
+        }
+    }
+    
+    private var continueButtonFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 14
+        case .regular: return 16
+        case .large: return 16
+        case .iPad: return 22
+        }
+    }
+    
+    private var continueButtonHPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 12
+        case .regular: return 15
+        case .large: return 15
+        case .iPad: return 20
+        }
+    }
+    
+    private var continueButtonVPadding: CGFloat {
+        switch deviceSize {
+        case .compact: return 6
+        case .regular: return 8
+        case .large: return 8
+        case .iPad: return 12
+        }
+    }
+    
+    private var continueButtonStrokeWidth: CGFloat {
+        switch deviceSize {
+        case .compact: return 1
+        case .regular: return 2
+        case .large: return 2
+        case .iPad: return 3
+        }
+    }
+    
+    private var continueButtonScale: CGFloat {
+        switch deviceSize {
+        case .compact: return 1.05
+        case .regular: return 1.1
+        case .large: return 1.1
+        case .iPad: return 1.1
+        }
+    }
+    
+    private var actionButtonFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 12
+        case .regular: return 14
+        case .large: return 14
+        case .iPad: return 18
+        }
+    }
+    
+    private var menuButtonFontSize: CGFloat {
+        switch deviceSize {
+        case .compact: return 13
+        case .regular: return 16
+        case .large: return 16
+        case .iPad: return 20
+        }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -1451,27 +1492,27 @@ struct GameOverView: View {
                     
                     VStack(spacing: scoreSpacing) {
                         Text("FINAL SCORE")
-                            .font(.system(size: deviceSize == .iPad ? 22 : deviceSize == .compact ? 14 : 16, weight: .bold, design: .monospaced))
+                            .font(.system(size: gameOverTitleFontSize, weight: .bold, design: .monospaced))
                             .foregroundColor(.yellow)
                         
                         Text("\(gameModel.score)")
                             .font(.system(size: scoreFontSize, weight: .black, design: .monospaced))
                             .foregroundColor(.white)
-                            .padding(.horizontal, deviceSize == .iPad ? 40 : deviceSize == .compact ? 20 : 30)
-                            .padding(.vertical, deviceSize == .iPad ? 20 : deviceSize == .compact ? 10 : 15)
+                            .padding(.horizontal, gameOverHPadding)
+                            .padding(.vertical, gameOverVPadding)
                             .background(Color.blue.opacity(0.8))
-                            .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
+                            .overlay(Rectangle().stroke(Color.white, lineWidth: gameOverStrokeWidth))
                     }
                 
                     if gameModel.score == gameModel.bestScore && gameModel.score > 0 {
                         Text("★ NEW HIGH SCORE! ★")
-                            .font(.system(size: deviceSize == .iPad ? 22 : deviceSize == .compact ? 14 : 16, weight: .black, design: .monospaced))
+                            .font(.system(size: continueButtonFontSize, weight: .black, design: .monospaced))
                             .foregroundColor(.yellow)
-                            .padding(.horizontal, deviceSize == .iPad ? 20 : deviceSize == .compact ? 12 : 15)
-                            .padding(.vertical, deviceSize == .iPad ? 12 : deviceSize == .compact ? 6 : 8)
+                            .padding(.horizontal, continueButtonHPadding)
+                            .padding(.vertical, continueButtonVPadding)
                             .background(Color.red.opacity(0.8))
-                            .overlay(Rectangle().stroke(Color.yellow, lineWidth: deviceSize == .iPad ? 3 : deviceSize == .compact ? 1 : 2))
-                            .scaleEffect(deviceSize == .compact ? 1.05 : 1.1)
+                            .overlay(Rectangle().stroke(Color.yellow, lineWidth: continueButtonStrokeWidth))
+                            .scaleEffect(continueButtonScale)
                     }
                 }
                 
@@ -1488,7 +1529,7 @@ struct GameOverView: View {
                     // Share Score Button
                     ShareLink(item: shareGameOverMessage()) {
                         Text("📤 SHARE SCORE")
-                            .font(.system(size: deviceSize == .iPad ? 18 : deviceSize == .compact ? 12 : 14, weight: .black, design: .monospaced))
+                            .font(.system(size: actionButtonFontSize, weight: .black, design: .monospaced))
                             .foregroundColor(.black)
                             .frame(width: buttonWidth, height: buttonHeight)
                             .background(
@@ -1509,33 +1550,51 @@ struct GameOverView: View {
                     }
                 
                     // Continue with Ad Button (if ads not removed and haven't used extra life yet)
-                    if !iapManager.adsRemoved && adManager.rewardedAdReady && !gameModel.hasUsedExtraLife {
-                        Button(action: {
-                            adManager.showRewardedAd { success in
-                                if success {
-                                    gameModel.continueWithExtraLife()
-                                }
-                            }
-                        }) {
-                            Text("📺 CONTINUE (+1 LIFE)")
-                                .font(.system(size: deviceSize == .iPad ? 20 : deviceSize == .compact ? 13 : 16, weight: .black, design: .monospaced))
-                                .foregroundColor(.black)
-                                .frame(width: buttonWidth, height: buttonHeight)
-                                .background(
-                                    ZStack {
-                                        Rectangle()
-                                            .fill(Color.yellow)
-                                        Rectangle()
-                                            .fill(Color.white.opacity(0.3))
-                                            .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
-                                            .offset(y: -(buttonHeight / 2.5))
-                                        Rectangle()
-                                            .fill(Color.black.opacity(0.3))
-                                            .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
-                                            .offset(y: (buttonHeight / 2.5))
+                    // Debug: Show current state
+                    if !iapManager.adsRemoved && !gameModel.hasUsedExtraLife {
+                        if adManager.rewardedAdReady {
+                            Button(action: {
+                                adManager.showRewardedAd { success in
+                                    if success {
+                                        gameModel.continueWithExtraLife()
                                     }
-                                )
-                                .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
+                                }
+                            }) {
+                                Text("📺 CONTINUE (+1 LIFE)")
+                                    .font(.system(size: menuButtonFontSize, weight: .black, design: .monospaced))
+                                    .foregroundColor(.black)
+                                    .frame(width: buttonWidth, height: buttonHeight)
+                                    .background(
+                                        ZStack {
+                                            Rectangle()
+                                                .fill(Color.yellow)
+                                            Rectangle()
+                                                .fill(Color.white.opacity(0.3))
+                                                .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
+                                                .offset(y: -(buttonHeight / 2.5))
+                                            Rectangle()
+                                                .fill(Color.black.opacity(0.3))
+                                                .frame(height: deviceSize == .iPad ? 6 : deviceSize == .compact ? 3 : 4)
+                                                .offset(y: (buttonHeight / 2.5))
+                                        }
+                                    )
+                                    .overlay(Rectangle().stroke(Color.white, lineWidth: deviceSize == .iPad ? 4 : deviceSize == .compact ? 2 : 3))
+                            }
+                        } else {
+                            // Show debug message when ad not ready
+                            VStack(spacing: 5) {
+                                Text("📺 AD LOADING...")
+                                    .font(.system(size: deviceSize == .iPad ? 16 : deviceSize == .compact ? 10 : 12, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.yellow)
+                                Text("Please wait for ad to load")
+                                    .font(.system(size: deviceSize == .iPad ? 12 : deviceSize == .compact ? 8 : 10, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.gray)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(Color.yellow.opacity(0.2))
+                            .overlay(Rectangle().stroke(Color.yellow, lineWidth: 2))
                         }
                     } else if !iapManager.adsRemoved && gameModel.hasUsedExtraLife {
                         // Show message that they've already used their continuation
@@ -1602,7 +1661,16 @@ struct GameOverView: View {
         }
         .onAppear {
             // Load ads when game over screen appears
+            print("🎮 Game Over screen appeared - loading ads")
             adManager.loadAds()
+            
+            // Also try to load ads again after a short delay if not ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                if !adManager.rewardedAdReady {
+                    print("🔄 Rewarded ad still not ready - trying again")
+                    adManager.loadRewardedAd()
+                }
+            }
         }
     }
     
@@ -2014,13 +2082,29 @@ class AdManager: NSObject, ObservableObject {
         }
     }
     
-    private func loadRewardedAd() {
+    func loadRewardedAd() {
+        #if targetEnvironment(simulator)
+        // In simulator, ads don't load properly, so simulate ready state
+        print("🔧 Simulator detected - simulating rewarded ad ready")
+        DispatchQueue.main.async {
+            self.rewardedAdReady = true
+        }
+        return
+        #endif
+        
+        print("🔄 Loading rewarded ad...")
         let request = Request()
         RewardedAd.load(with: rewardedAdUnitID, request: request) { [weak self] ad, error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Failed to load rewarded ad: \(error.localizedDescription)")
                     self?.rewardedAdReady = false
+                    
+                    // Retry loading after 5 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                        print("🔄 Retrying rewarded ad load...")
+                        self?.loadRewardedAd()
+                    }
                 } else {
                     print("✅ Rewarded ad loaded successfully")
                     self?.rewardedAd = ad
@@ -2050,6 +2134,15 @@ class AdManager: NSObject, ObservableObject {
     }
     
     func showRewardedAd(completion: @escaping (Bool) -> Void) {
+        #if targetEnvironment(simulator)
+        // In simulator, ads don't work properly, so simulate successful ad watch
+        print("🔧 Simulator detected - simulating successful ad watch")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            completion(true)
+        }
+        return
+        #endif
+        
         guard let rewardedAd = rewardedAd else {
             print("⚠️ Rewarded ad not ready")
             completion(false)
@@ -2451,13 +2544,23 @@ class GameCenterManager: ObservableObject {
     }
     
     func authenticateUser() {
+        print("🔄 Attempting Game Center authentication...")
         GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, error in
             DispatchQueue.main.async {
                 if let error = error {
                     print("❌ Game Center authentication failed: \(error.localizedDescription)")
                     self?.isAuthenticated = false
+                    
+                    // Retry after a delay if it's a network error
+                    if error.localizedDescription.contains("network") || error.localizedDescription.contains("Network") {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                            print("🔄 Retrying Game Center authentication...")
+                            self?.authenticateUser()
+                        }
+                    }
                 } else if let viewController = viewController {
                     // Present authentication view controller
+                    print("📱 Presenting Game Center authentication view")
                     if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                        let rootViewController = windowScene.windows.first?.rootViewController {
                         rootViewController.present(viewController, animated: true)
@@ -2468,7 +2571,7 @@ class GameCenterManager: ObservableObject {
                     // Fetch user's current rank
                     self?.fetchUserRank()
                 } else {
-                    print("⚠️ Game Center authentication cancelled")
+                    print("⚠️ Game Center authentication cancelled or unavailable")
                     self?.isAuthenticated = false
                 }
             }

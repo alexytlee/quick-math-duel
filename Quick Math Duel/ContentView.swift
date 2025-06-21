@@ -11,6 +11,7 @@ import UserNotifications
 import AudioToolbox
 import GoogleMobileAds
 import GameKit
+import AppTrackingTransparency
 
 // MARK: - Device Size Classification
 enum DeviceSize {
@@ -47,6 +48,30 @@ struct ContentView: View {
         deviceSize == .iPad ? 600 : .infinity
     }
     
+    private func requestTrackingPermission() {
+        // Delay the request slightly to ensure the app is fully loaded
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            if #available(iOS 14.5, *) {
+                ATTrackingManager.requestTrackingAuthorization { status in
+                    DispatchQueue.main.async {
+                        switch status {
+                        case .authorized:
+                            print("Tracking authorized - better ad targeting enabled")
+                        case .denied:
+                            print("Tracking denied - limited ad targeting")
+                        case .restricted:
+                            print("Tracking restricted")
+                        case .notDetermined:
+                            print("Tracking not determined")
+                        @unknown default:
+                            print("Unknown tracking status")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -78,6 +103,7 @@ struct ContentView: View {
             notificationManager.requestPermissions()
             gameModel.setNotificationManager(notificationManager)
             gameModel.setGameCenterManager(gameCenterManager)
+            requestTrackingPermission()
         }
     }
     

@@ -18,6 +18,8 @@
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-4564366280351525~9348009381</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This app would like to track you across apps and websites to provide personalized ads and improve our services.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
